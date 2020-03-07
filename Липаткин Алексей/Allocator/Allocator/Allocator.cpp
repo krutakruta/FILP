@@ -66,9 +66,7 @@ struct stack_allocator {
     using const_pointer = const T*;
     using reference = T&;
     using const_reference = const T&;
-    using size_type = std::size_t;
-    using difference_type = std::ptrdiff_t;
-    using propagate_on_container_move_assignment = std::true_type;
+    using size_type = size_t;
 
     template< class U >
     struct rebind {
