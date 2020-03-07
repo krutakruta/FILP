@@ -1,12 +1,10 @@
 ﻿#include <iostream>
 #include <Windows.h>
 #include <stdio.h>
-#include <WindowsX.h>
 #include <map>
 #include <vector>
 #include <algorithm>
 #include <ctime>
-#include "LinkedList.h"
 
 using namespace std;
 
