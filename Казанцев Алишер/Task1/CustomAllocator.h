@@ -21,7 +21,6 @@ public:
 
 class BufferList {
 public:
-	Buffer *next;
 	Buffer *current;
 	Buffer *top;
 
@@ -71,28 +70,13 @@ public:
 		buffers = other.buffers;
 	}
 
-	CustomAllocator& operator=(const CustomAllocator& x) = default;
-
-	//~CustomAllocator() throw();
-
-
 	pointer allocate(size_type size) {
 		return reinterpret_cast<T*>(buffers->allocate(size, sizeof(T)));
-	};
-	void construct(pointer p, const T& val) {
-
 	};
 
 	void destroy(pointer p) {
 		p->~T();
 	};
 
-	void deallocate(pointer p, size_type n) {
-
-	};
-
-	size_type max_size()
-	{
-		return allocator<T>::max_size();
-	};
+	void deallocate(pointer p, size_type n) {};
 };
