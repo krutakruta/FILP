@@ -26,6 +26,10 @@ struct MyAllocator {
     void deallocate(pointer p, size_t size) {
         lastP -= size;
     }
+
+    ~MyAllocator() {
+        free(ptr);
+    }
 private:
     void* ptr;
     size_t lastP;
