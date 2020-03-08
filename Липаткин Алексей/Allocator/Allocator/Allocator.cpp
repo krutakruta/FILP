@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include "LinkedList.h"
 
 using namespace std;
 
@@ -59,8 +60,39 @@ void readFile(char* text, int size, LPCWSTR filename) {
     CloseHandle(hfile);
 }
 
-template<typename T, size_t size = 90000>
-struct stack_allocator {
+template <typename T, size_t size = 1024 * 1024 >
+class Buffer {
+public:
+    void* ptr;
+    size_t sp;
+    size_t minOffset = 4000;
+
+    Buffer() {
+        ptr = malloc(size);
+        sp = 0;
+    }
+
+    ~Buffer() {
+        if (sp > minOffset)
+            free(ptr);
+    }
+
+    T* allocate(size_t n) {
+        if (n + sp > size) {
+            return nullptr;
+        }
+        T* ret = (T*)((T*)ptr + sp);
+        sp += n;
+        return ret;
+    }
+
+    void deallocate(size_t n) {
+        sp -= n;
+    }
+};
+
+template<typename T>
+struct customAllocator {
     using value_type = T;
     using pointer = T*;
     using const_pointer = const T*;
@@ -70,38 +102,53 @@ struct stack_allocator {
 
     template< class U >
     struct rebind {
-        typedef stack_allocator<U> other;
+        typedef customAllocator<U> other;
     };
 
-    stack_allocator() noexcept = default;
-    ~stack_allocator() noexcept = default;
+    customAllocator() noexcept {
+        current = Buffer<T>();
+        buffers = LinkedList<Buffer<T>>(current);
+    };
 
-    stack_allocator(const stack_allocator& other) noexcept = default;
+    ~customAllocator() noexcept {
+        while (buffers.getCount() != 0) {
+            Buffer<T> bufferToDelete = buffers.popLeftElement();
+            bufferToDelete.~Buffer();
+        }
+    };
+
+    customAllocator(const customAllocator& other) noexcept {
+        buffers = LinkedList<Buffer<T>>();
+        current = Buffer<T>();
+    };
 
     template< class U >
-    stack_allocator(const stack_allocator<U>& other) noexcept
+    customAllocator(const customAllocator<U>& other) noexcept
     {
+        buffers = LinkedList<Buffer<T>>();
+        current = Buffer<T>();
     }
 
-    T* allocate(std::size_t n)
+    pointer allocate(size_t n)
     {
-        value_type* ret = (value_type*)((T*)ptr + sp);
-        sp += n;
+        pointer ret = current.allocate(n);
+        if (ret == nullptr) {
+            current = Buffer<T>();
+            buffers.addElementRight(current);
+            ret = current.allocate(n);
+        }
         return ret;
     }
 
-    void deallocate(T* p, std::size_t n)
+    void deallocate(pointer p, size_t n)
     {
-        sp -= n;
+        current.deallocate(n);
     }
 
 private:
-    void* ptr = malloc(size);
-    size_t sp = 0;
+    LinkedList<Buffer<T>> buffers;
+    Buffer<T> current;
 };
-
-template<size_t size>
-struct stack_allocator<void, size>;
 
 size_t getLength(char* word) {
     size_t length = 0;
@@ -134,8 +181,8 @@ bool cmp(const std::pair< string, size_t >& a, const std::pair< string, size_t >
     return a.second > b.second;
 }
 
-map<char*, size_t, customCmpString, stack_allocator<char*>> parseBufferWithCustomAllocator(char* text, int size) {
-    auto wordCount = map<char*, size_t, customCmpString, stack_allocator<char*>>();
+map<char*, size_t, customCmpString, customAllocator<char*>> parseBufferWithCustomAllocator(char* text, int size) {
+    auto wordCount = map<char*, size_t, customCmpString, customAllocator<char*>>();
     int offset = 0;
     for (int i = 0; i <= size; i++) {
         if ((int)text[i] <= -1 || (int)text[i] >= 255 || !isalpha(text[i])) {
