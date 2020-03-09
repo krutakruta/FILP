@@ -4,9 +4,8 @@
 #include <map>
 #include <algorithm>
 #include <vector>
-#include <memory>
 #include <time.h>
-#include "manager.h"
+#include "mmanager.h"
 
 using namespace std;
 
@@ -15,7 +14,7 @@ struct wordComparator
 {
 	bool operator()( char* a, char* b) const {
 		int i = 0;
-		while (*(a + i) > 0 && *(b + i) > 0 && isalpha(*(a + i)) && isalpha(*(b + i)))
+		while (isalpha((unsigned char)(a + i)) && isalpha((unsigned char)(b + i)))
 		{
 			if (*(a + i) == *(b + i))
 			{
@@ -24,7 +23,7 @@ struct wordComparator
 			}
 			return *(a + i) < *(b + i);
 		}
-		return *(b + i) > 0 && isalpha(*(b + i));
+		return isalpha((unsigned char)(b + i));
 	}
 };
 
@@ -34,7 +33,7 @@ void find_word(char* text, int& word_start)
 	int i = word_start;
 	while (text[i] > 0)
 	{
-		if (isalpha(text[i]))
+		if (isalpha((unsigned char)text[i]))
 		{
 			i++;
 		}
@@ -48,28 +47,28 @@ void find_word(char* text, int& word_start)
 }
 
 //Functions that parsing text
-map<char*, int, wordComparator, memoryManager< pair<char*, int> > > find_words_custom_alloc(char* text)
+map<char*, int, wordComparator, mallocator<pair<char*, int>> >* find_words_custom_alloc(char* text)
 {
 	int word_start_position = 0;
 	int i = 0;
-	map<char*, int, wordComparator, memoryManager<pair<char*, int>>> dict;
+	map<char*, int, wordComparator, mallocator<pair<char*, int>>>* dict = new map<char*, int, wordComparator, mallocator<pair<char*, int>>>();
 	while (text[i] != 0)
 	{
-		while (!isalpha(text[i]) && text[i] != 0)
+		while (!isalpha((unsigned char)text[i]) && text[i] != 0)
 		{
 			i++;
 		}
 		word_start_position = i;
 		find_word(text, i);
 		char* word = text + word_start_position;
-		auto it = dict.find(word);
-		if (it != dict.end())
+		auto it = dict->find(word);
+		if (it != dict->end())
 		{
 			it->second++;
 		}
 		else
 		{
-			dict.emplace(word, 1);
+			dict->emplace(word, 1);
 		}
 	}
 	return dict;
@@ -87,7 +86,7 @@ map<char*, int, wordComparator> find_words_default_alloc(char* text)
 			i++;
 			continue;
 		}
-		while (text[i] > 0 && !isalpha(text[i]))
+		while (text[i] != 0 && !isalpha((unsigned char)text[i]))
 		{
 			i++;
 		}
@@ -123,7 +122,7 @@ void print_result(map<char*, int, wordComparator> &res)
 	for (auto it = list.begin(); it != list.end(); it++)
 	{
 		int s = 0;
-		while (it->first[s] > 0 && isalpha(it->first[s]))
+		while (it->first[s] > 0 && isalpha((unsigned char)(it->first[s])))
 		{
 			cout << it->first[s];
 			s++;
@@ -136,7 +135,7 @@ void print_result(map<char*, int, wordComparator> &res)
 void elapse_time_custom_alloc(char* Text)
 {
 	unsigned int start = clock();
-	map<char*, int, wordComparator, memoryManager< pair<char*, int> > > res = find_words_custom_alloc(Text);
+	map<char*, int, wordComparator, mallocator<pair<char*, int>> >* res = find_words_custom_alloc(Text);
 	unsigned int end = clock();
 	cout << "Work time with custom allocator is " << end - start << endl << endl;
 }
@@ -153,7 +152,7 @@ void elapse_time_default_alloc(char* Text, bool print = false)
 
 int main()
 {
-	#define FILENAME "text.txt"
+	#define FILENAME "big.txt"
 	HANDLE hFile;
 	hFile = CreateFile(
 		FILENAME, GENERIC_READ, 0, NULL,
@@ -175,7 +174,7 @@ int main()
 	Text[size] = 0;
 	CloseHandle(hFile);
 	elapse_time_custom_alloc(Text);
-	//elapse_time_default_alloc(Text, true);
+	elapse_time_default_alloc(Text);
 	system("pause");
 	return 0;
 }
