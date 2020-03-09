@@ -152,7 +152,7 @@ void elapse_time_default_alloc(char* Text, bool print = false)
 
 int main()
 {
-	#define FILENAME "big.txt"
+	#define FILENAME "text.txt"
 	HANDLE hFile;
 	hFile = CreateFile(
 		FILENAME, GENERIC_READ, 0, NULL,
