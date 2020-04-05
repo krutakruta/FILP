@@ -24,7 +24,7 @@ struct mallocator {
     using reference = T&;
     using const_reference = const T&;
     using size_type = size_t;
-    const size_t size = 1000;
+    const size_t size = 10000000;
     const size_t bytesSize = size* sizeof(T);
     template< class U >
     struct rebind {

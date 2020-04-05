@@ -33,7 +33,7 @@ int getText(char* file_name, char** buffer);
 void getWord(char** buffer);
 map<char*, size_t, cmp_str, mallocator<pair<char* const, size_t>>> getWordsFreq(char* buffer);
 void printWordByFirstChar(char* first);
-map<string, size_t> defaultSolve(char* text);
+map<char *, size_t, cmp_str> defaultSolve(char* text);
 
 
 int main() {
@@ -51,47 +51,39 @@ int main() {
         printf(" %d\n", it.second);
     }
     start = high_resolution_clock::now();
-    map<string, size_t> counter = defaultSolve(text);
+    map<char *, size_t, cmp_str> counter = defaultSolve(text);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
     cout << "default solution time : " << duration.count() << endl;
     for (auto & it : counter) {
-        cout << it.first << " ";
+        printWordByFirstChar(it.first);
         printf(" %d\n", it.second);
     }
 
 }
 
-map<string, size_t> defaultSolve(char* text)
+map<char *, size_t, cmp_str> defaultSolve(char* text)
 {
-    map<string, size_t> strCounter;
-    string currentWord  = "";
+    map<char*, size_t, cmp_str> strCounter;
+    bool isEnd = false;
     char* textPtr = text;
-    char* endPtr = text;
     while (true)
     {
-        int len = 0;
-        while(isalpha(*endPtr)){
-            len++;
-            endPtr++;
-        }
-        if(len){
-            currentWord = string(textPtr, len);
-            for_each(currentWord.begin(), currentWord.end(), [](char & c){
-                c = tolower(c);
-            });
-            if(strCounter.find(currentWord) != strCounter.end())
-                strCounter[currentWord]++;
-            else
-                strCounter.insert(pair<string, int>(currentWord, 1));
-            textPtr = endPtr;
-        }
-        while(!isalpha(*textPtr) && *textPtr != '\0'){
+        while (!isalpha(*textPtr)) {
+            if (*textPtr == '\0') {
+                isEnd = true;
+                break;
+            }
             textPtr++;
-            endPtr++;
         }
-        if(*textPtr == '\0')
+        if (isEnd)
             break;
+        if (strCounter.find(textPtr) != strCounter.end())
+            strCounter[textPtr]++;
+        else {
+            strCounter.insert(pair<char*, int>(textPtr, 1));
+        }
+        getWord(&textPtr);
     }
     return strCounter;
 }
